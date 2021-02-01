@@ -1,0 +1,76 @@
+{
+  "project_info": {
+    "project_number": "1013009027492",
+    "project_id": "shalla-tamilanfood-admin",
+    "storage_bucket": "shalla-tamilanfood-admin.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1013009027492:android:1c85adf15ead4e57403131",
+        "android_client_info": {
+          "package_name": "com.shalla.tamilanfoodadmin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1013009027492-nhgh4pg92a6erk4afptpji6t7sqet5oc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.shalla.tamilanfoodadmin",
+            "certificate_hash": "4f888600b21822e1fcc90b255b1ee988aeac2ee7"
+          }
+        },
+        {
+          "client_id": "1013009027492-vbsmu6lv6a6mjrcf9m98h6u5dcm9nb7e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNZj6yK35ELAo-Rv8Pdy-FJ49eMQ9ZPik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1013009027492-vbsmu6lv6a6mjrcf9m98h6u5dcm9nb7e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1013009027492:android:ead4cccc4c2fd75d403131",
+        "android_client_info": {
+          "package_name": "com.shalla.tamilanfoodrecipes"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1013009027492-vbsmu6lv6a6mjrcf9m98h6u5dcm9nb7e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNZj6yK35ELAo-Rv8Pdy-FJ49eMQ9ZPik"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1013009027492-vbsmu6lv6a6mjrcf9m98h6u5dcm9nb7e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
