@@ -1,6 +1,7 @@
 package com.shalla.tamilanfoodrecipes.ParticularFood;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -13,19 +14,24 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.shalla.tamilanfoodrecipes.R;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ParticularFoodItem extends AppCompatActivity {
     @NonNull
-    TextView tvCategory,tvTitle,tvDescription;
+    TextView tvCategory,tvTitle,tvDescription,tvDislikesCount,tvLikesCount;
     @NonNull
-    ImageView imgFoodPic;
+    ImageView imgFoodPic,imgLike,imgDisLike,imgFav,imgShare;
     @NonNull
     TextView tvIng,tvIng1,tvIng2,tvIng3,tvIng4,tvIng5,tvIng6,tvIng7,tvIng8,tvIng9,tvIng10,
             tvIng11,tvIng12,tvIng13,tvIng14,tvIng15,tvIng16,tvIng17,tvIng18,tvIng19;
@@ -38,7 +44,12 @@ public class ParticularFoodItem extends AppCompatActivity {
     String  Ing,Ing1,Ing2,Ing3,Ing4,Ing5,Ing6,Ing7,Ing8,Ing9,Ing10,
             Ing11,Ing12,Ing13,Ing14,Ing15,Ing16,Ing17,Ing18,Ing19;
     @NonNull
+    int OldLikesCount,OldDisLikesCount;
+    boolean templike,tempdislike;
+    @NonNull
     List ingredientsList=new ArrayList();
+    @NonNull
+    Map<String,Object> updateLikes=new HashMap<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,56 +70,210 @@ public class ParticularFoodItem extends AppCompatActivity {
         if(foodPicURL!=null) {
             Glide.with(getApplicationContext()).load(foodPicURL).into(imgFoodPic);
         }
+        //getFoodInfo();
         getFoodInfo();
-    }
-
-    private void getFoodInfo() {
-        db.collection("Recipes").document("sGUCCjImREZOIohkrxGc").get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+        imgLike.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                toast(" food details are available");
-                if(task.isSuccessful()){
-                    try {
-                        DocumentSnapshot data = task.getResult();
-                        ingredientsList = (List) data.getData().get("ingredients");
-                        Log.d("List", ingredientsList.toString());
-                        Ing = ingredientsList.get(0).toString();
-                        Ing1 = ingredientsList.get(1).toString();
-                        Ing2 = ingredientsList.get(2).toString();
-                        Ing3 = ingredientsList.get(3).toString();
-                        Ing4 = ingredientsList.get(4).toString();
-                        Ing5 = ingredientsList.get(5).toString();
-                        Ing6 = ingredientsList.get(6).toString();
-                        Ing7 = ingredientsList.get(7).toString();
-                        Ing8 = ingredientsList.get(8).toString();
-                        Ing9 = ingredientsList.get(9).toString();
-                        Ing10 = ingredientsList.get(10).toString();
-                        Ing11 = ingredientsList.get(11).toString();
-                        Ing12 = ingredientsList.get(12).toString();
-                        Ing13 = ingredientsList.get(13).toString();
-                        Ing14 = ingredientsList.get(14).toString();
-                        Ing15 = ingredientsList.get(15).toString();
-                        Ing16 = ingredientsList.get(16).toString();
-                        Ing17 = ingredientsList.get(17).toString();
-                        Ing18 = ingredientsList.get(18).toString();
-                        Ing19 = ingredientsList.get(19).toString();
-
-                    }catch (Exception e){
-                        setIngredients();
-                    }
+            public void onClick(View v) {
+                templike=true;
+                OldLikesCount=OldLikesCount+1;
+                imgLike.setImageResource(R.drawable.ic_baseline_thumb_up_done);
+                tvLikesCount.setText(String.valueOf(OldLikesCount));
+                imgLike.setEnabled(false);
+                imgDisLike.setEnabled(true);
+                if(tempdislike){
+                    OldDisLikesCount=OldDisLikesCount-1;
+                    tvDislikesCount.setText(String.valueOf(OldDisLikesCount));
+                    imgDisLike.setImageResource(R.drawable.ic_baseline_thumb_down_alt_24);
                 }
+               updateLikesCount("Liked");
+            }
+        });
+
+        imgDisLike.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                tempdislike=true;
+                OldDisLikesCount=OldDisLikesCount+1;
+                imgDisLike.setImageResource(R.drawable.ic_baseline_thumb_down);
+                tvDislikesCount.setText(String.valueOf(OldDisLikesCount));
+                imgDisLike.setEnabled(false);
+                imgLike.setEnabled(true);
+                if(templike){
+                    OldLikesCount=OldLikesCount-1;
+                    tvLikesCount.setText(String.valueOf(OldLikesCount));
+                    imgLike.setImageResource(R.drawable.ic_baseline_thumb_up_alt_24);
+                }
+                updateLikesCount("Disliked");
+            }
+
+        });
+
+        imgFav.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
             }
-        }).addOnFailureListener(new OnFailureListener() {
+        });
+
+        imgShare.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onFailure(@NonNull Exception e) {
-                toast("Some food details are not available");
+            public void onClick(View v) {
+
             }
         });
     }
 
+    private void updateLikesCount(String toastMsg) {
+        updateLikes.put("likes",OldLikesCount);
+        updateLikes.put("dislikes",OldDisLikesCount);
+        db.collection("Recipes").document(foodID).update(updateLikes).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                toast(toastMsg);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                toast("Check yoy internet connection");
+            }
+        });
+    }
+
+    private void getFoodInfo() {
+        try {
+            db.collection("Recipes").document(foodID).addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                @Override
+                public void onEvent(@Nullable DocumentSnapshot value, @Nullable FirebaseFirestoreException error) {
+                    if(error!=null){
+                        return;
+                    }
+                    if(value.exists()){
+                        ingredientsList = (List) value.getData().get("ingredients");
+                        Log.d("List", ingredientsList.toString());
+                        setIngredients();
+                        OldLikesCount= ((Long) value.get("likes")).intValue();
+                        OldDisLikesCount=  ((Long) value.get("dislikes")).intValue();
+                            tvLikesCount.setText(String.valueOf(OldLikesCount));
+                            tvDislikesCount.setText(String.valueOf(OldDisLikesCount));
+                    }
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
     private void setIngredients() {
-        if (Ing != null) {
+      for(int i=0;i<ingredientsList.size();i++){
+            switch (i) {
+                case 0:
+                    Ing = ingredientsList.get(0).toString();
+                    tvIng.setVisibility(View.VISIBLE);
+                    tvIng.setText(Ing);
+                    break;
+                case 1:
+                    Ing1 = ingredientsList.get(1).toString();
+                    tvIng1.setVisibility(View.VISIBLE);
+                    tvIng1.setText(Ing1);
+                    break;
+                case 2:
+                    Ing2 = ingredientsList.get(2).toString();
+                    tvIng2.setVisibility(View.VISIBLE);
+                    tvIng2.setText(Ing2);
+                    break;
+                case 3:
+                    Ing3 = ingredientsList.get(3).toString();
+                    tvIng3.setVisibility(View.VISIBLE);
+                    tvIng3.setText(Ing3);
+                    break;
+                case 4:
+                    Ing4 = ingredientsList.get(4).toString();
+                    tvIng4.setVisibility(View.VISIBLE);
+                    tvIng4.setText(Ing4);
+                    break;
+                case 5:
+                    Ing5 = ingredientsList.get(5).toString();
+                    tvIng5.setVisibility(View.VISIBLE);
+                    tvIng5.setText(Ing5);
+                    break;
+                case 6:
+                    Ing6 = ingredientsList.get(6).toString();
+                    tvIng6.setVisibility(View.VISIBLE);
+                    tvIng6.setText(Ing6);
+                    break;
+                case 7:
+                    Ing7 = ingredientsList.get(7).toString();
+                    tvIng7.setVisibility(View.VISIBLE);
+                    tvIng7.setText(Ing7);
+                    break;
+                case 8:
+                    Ing8 = ingredientsList.get(8).toString();
+                    tvIng8.setVisibility(View.VISIBLE);
+                    tvIng8.setText(Ing8);
+                    break;
+                case 9:
+                    Ing9 = ingredientsList.get(9).toString();
+                    tvIng9.setVisibility(View.VISIBLE);
+                    tvIng9.setText(Ing9);
+                    break;
+                case 10:
+                    Ing10 = ingredientsList.get(10).toString();
+                    tvIng10.setVisibility(View.VISIBLE);
+                    tvIng10.setText(Ing10);
+                    break;
+                case 11:
+                    Ing11 = ingredientsList.get(11).toString();
+                    tvIng11.setVisibility(View.VISIBLE);
+                    tvIng11.setText(Ing11);
+                    break;
+                case 12:
+                    Ing12 = ingredientsList.get(12).toString();
+                    tvIng12.setVisibility(View.VISIBLE);
+                    tvIng12.setText(Ing12);
+                    break;
+                case 13:
+                    Ing13 = ingredientsList.get(13).toString();
+                    tvIng13.setVisibility(View.VISIBLE);
+                    tvIng13.setText(Ing13);
+                    break;
+                case 14:
+                    Ing14 = ingredientsList.get(14).toString();
+                    tvIng14.setVisibility(View.VISIBLE);
+                    tvIng14.setText(Ing14);
+                    break;
+                case 15:
+                    Ing15 = ingredientsList.get(15).toString();
+                    tvIng15.setVisibility(View.VISIBLE);
+                    tvIng15.setText(Ing15);
+                    break;
+                case 16:
+                    Ing16 = ingredientsList.get(16).toString();
+                    tvIng16.setVisibility(View.VISIBLE);
+                    tvIng16.setText(Ing16);
+                    break;
+                case 17:
+                    Ing17 = ingredientsList.get(17).toString();
+                    tvIng17.setVisibility(View.VISIBLE);
+                    tvIng17.setText(Ing17);
+                    break;
+                case 18:
+                    Ing18 = ingredientsList.get(18).toString();
+                    tvIng18.setVisibility(View.VISIBLE);
+                    tvIng18.setText(Ing18);
+                    break;
+                case 19:
+                    Ing19 = ingredientsList.get(19).toString();
+                    tvIng19.setVisibility(View.VISIBLE);
+                    tvIng19.setText(Ing19);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        /*if (Ing != null) {
             tvIng.setVisibility(View.VISIBLE);
             tvIng.setText(Ing);
         }
@@ -187,7 +352,8 @@ public class ParticularFoodItem extends AppCompatActivity {
         if (Ing19 != null) {
             tvIng19.setVisibility(View.VISIBLE);
             tvIng19.setText(Ing19);
-        }
+        }*/
+        
     }
 
     private void toast(String msg){
@@ -219,6 +385,13 @@ public class ParticularFoodItem extends AppCompatActivity {
         tvIng18=findViewById(R.id.tvIng18);
         tvIng19=findViewById(R.id.tvIng19);
         imgFoodPic=findViewById(R.id.imgFoodPic);
+        imgLike=findViewById(R.id.imgLike);
+        imgDisLike=findViewById(R.id.imgDisLike);
+        imgFav=findViewById(R.id.imgFav);
+        imgShare=findViewById(R.id.imgShare);
+
+        tvLikesCount=findViewById(R.id.tvLikesCount);
+        tvDislikesCount=findViewById(R.id.tvDislikesCount);
 
     }
 
