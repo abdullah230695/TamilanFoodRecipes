@@ -35,18 +35,32 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.2.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    implementation 'com.google.firebase:firebase-firestore:22.0.2'
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
 
     //For images
     implementation 'com.github.bumptech.glide:glide:4.9.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.9.0'
     annotationProcessor 'androidx.annotation:annotation:1.1.0'
     implementation 'de.hdodenhof:circleimageview:3.1.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'com.karumi:dexter:6.2.1'
+    // Other Firebase/Play services deps
+    implementation 'com.google.android.gms:play-services-auth:18.0.0'
+    //Firebase Authentication
+    implementation 'com.google.firebase:firebase-auth:19.3.1'
+    implementation 'com.google.firebase:firebase-analytics:17.4.2'
+    // FirebaseUI (for authentication)
+    implementation 'com.firebaseui:firebase-ui-auth:6.2.0'
+    // Firestore
+    implementation 'com.google.firebase:firebase-firestore:21.4.3'
 
     //Firebase ui for recyelerView
     implementation 'com.firebaseui:firebase-ui-firestore:6.2.0'
+    // butter knife
+    implementation 'com.jakewharton:butterknife:10.0.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.0.0'
 
 }

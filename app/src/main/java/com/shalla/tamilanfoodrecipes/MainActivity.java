@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.shalla.tamilanfoodrecipes.FoodLists.AllFoodsList;
 
@@ -33,5 +34,8 @@ ImageView imgHome,imgAllFoodList,imgProfile;
             case R.id.imgAllFoodList :
                 startActivity(new Intent(getApplicationContext(), AllFoodsList.class));
         }
+    }
+    public void toast(String msg){
+        Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
     }
 }
