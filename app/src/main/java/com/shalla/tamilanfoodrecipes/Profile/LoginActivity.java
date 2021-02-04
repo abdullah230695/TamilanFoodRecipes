@@ -5,6 +5,8 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -56,8 +58,10 @@ public class LoginActivity extends AppCompatActivity {
     AppCompatButton buttonContinue;
     ProgressDialog progressDialog;
     String code,number;
+    public static String isGuest;
+    public static SharedPreferences prefs;
+    public static SharedPreferences.Editor spEditor;
 
-MainActivity ma=new MainActivity();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,8 +76,11 @@ MainActivity ma=new MainActivity();
         phone_signup=findViewById(R.id.signupMobileNum);
         ContinueAsGuest=findViewById(R.id.ContinueasGuest);
         db= FirebaseFirestore.getInstance();
+        prefs = getSharedPreferences("locations", MODE_PRIVATE);
+        spEditor = getSharedPreferences("locations", MODE_PRIVATE).edit();
 
         setupFirebaseAuth();
+
         init();
         buttonContinue.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -128,6 +135,8 @@ MainActivity ma=new MainActivity();
         ContinueAsGuest.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                spEditor.putString("isGuest","yes");
+                spEditor.apply();
                 startActivity(new Intent(mContext,MainActivity.class));
                 finish();
             }
@@ -143,7 +152,7 @@ MainActivity ma=new MainActivity();
         builderExit.setPositiveButton("YES", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                finish();
+                finishAffinity();
             }
         }).setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
             @Override
@@ -163,11 +172,19 @@ MainActivity ma=new MainActivity();
 
     private void init(){
         try{
-        if (mAuth.getCurrentUser() != null){
-            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-            startActivity(intent);
-            finish();
-        }
+            isGuest=prefs.getString("isGuest","");
+            if(isGuest=="yes"){
+                Toast.makeText(mContext, "You are entering by guest account", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                startActivity(intent);
+                finish();
+            }else {
+                if (mAuth.getCurrentUser() != null) {
+                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    startActivity(intent);
+                    finish();
+                }
+            }
         }catch(Exception e){ Log.d("error is : ",e.getMessage());}
     }
 

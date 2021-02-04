@@ -1,9 +1,7 @@
 package com.shalla.tamilanfoodrecipes.ParticularFood;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -11,15 +9,31 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import static com.shalla.tamilanfoodrecipes.Profile.MyProfile.*;
+import static com.shalla.tamilanfoodrecipes.Profile.LoginActivity.*;
+
+import com.google.firebase.firestore.Query;
+import com.shalla.tamilanfoodrecipes.FoodLists.AllFoodsList;
+import com.shalla.tamilanfoodrecipes.MainActivity;
+import com.shalla.tamilanfoodrecipes.Profile.MyProfile;
 import com.shalla.tamilanfoodrecipes.R;
 
 import java.util.ArrayList;
@@ -27,84 +41,118 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ParticularFoodItem extends AppCompatActivity {
+public class ParticularFoodItem extends AppCompatActivity implements  View.OnClickListener {
     @NonNull
     TextView tvCategory,tvTitle,tvDescription,tvDislikesCount,tvLikesCount;
     @NonNull
-    ImageView imgFoodPic,imgLike,imgDisLike,imgFav,imgShare;
+    ImageView imgFoodPic,imgLike,imgDisLike,imgFav,imgShare,imgHome,imgAllFoodList,imgProfile;
     @NonNull
     TextView tvIng,tvIng1,tvIng2,tvIng3,tvIng4,tvIng5,tvIng6,tvIng7,tvIng8,tvIng9,tvIng10,
             tvIng11,tvIng12,tvIng13,tvIng14,tvIng15,tvIng16,tvIng17,tvIng18,tvIng19;
+    ConstraintLayout particularParent;
 
     @NonNull
     FirebaseFirestore db=FirebaseFirestore.getInstance();
+    FirebaseAuth mAuth=FirebaseAuth.getInstance();
     @NonNull
-    String title,description,foodPicURL,foodID,category;
+    String title,description,foodPicURL,foodID,UID,category;
     @NonNull
     String  Ing,Ing1,Ing2,Ing3,Ing4,Ing5,Ing6,Ing7,Ing8,Ing9,Ing10,
             Ing11,Ing12,Ing13,Ing14,Ing15,Ing16,Ing17,Ing18,Ing19;
     @NonNull
     int OldLikesCount,OldDisLikesCount;
-    boolean templike,tempdislike;
+    boolean templike,tempdislike,isFavoured,isLiked,isDisLiked;
     @NonNull
     List ingredientsList=new ArrayList();
     @NonNull
     Map<String,Object> updateLikes=new HashMap<>();
+    Map<String,Object> favourite=new HashMap<>();
+    List <String>isLikedList=new ArrayList();
+    List <String>isDisLikedList=new ArrayList();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_particular_food_item);
         setupID();
+        imgAllFoodList.setOnClickListener(this);
+        imgProfile.setOnClickListener(this);
 
-        title=getIntent().getStringExtra("title");
-        description=getIntent().getStringExtra("description");
-        foodPicURL=getIntent().getStringExtra("foodPicURL");
-        foodID=getIntent().getStringExtra("foodID");
-        //category=getIntent().getStringExtra("category");
-        if (title != null) {
-            tvTitle.setText(title);
+
+        try {
+            title=getIntent().getStringExtra("title");
+            description=getIntent().getStringExtra("description");
+            foodPicURL=getIntent().getStringExtra("foodPicURL");
+            foodID=getIntent().getStringExtra("foodID");
+            category=getIntent().getStringExtra("category");
+            isGuest=prefs.getString("isGuest","");
+
+            if(!isGuest.equals("yes")) {
+                if (mAuth.getCurrentUser().getUid() != null) {
+                    UID = mAuth.getCurrentUser().getUid();
+                }
+            }
+
+
+            if (title != null) {
+                tvTitle.setText(title);
+            }
+            if (description != null) {
+                tvDescription.setText(description);
+            }
+            if(foodPicURL!=null) {
+                Glide.with(getApplicationContext()).load(foodPicURL).into(imgFoodPic);
+            }
+
+                getFoodInfo();
+            if(!isGuest.equals("yes")) {
+                getIsFavoured();
+                getisLiked();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        if (description != null) {
-            tvDescription.setText(description);
-        }
-        if(foodPicURL!=null) {
-            Glide.with(getApplicationContext()).load(foodPicURL).into(imgFoodPic);
-        }
-        //getFoodInfo();
-        getFoodInfo();
+
         imgLike.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(isGuest.equals("yes")){
+                    snackbar("இந்த அம்சத்தைப் பயன்படுத்த உங்கள் மொபைல் எண்ணுடன் ஒரு கணக்கை உருவாக்கவும்");
+                    return;
+                }
                 templike=true;
                 OldLikesCount=OldLikesCount+1;
                 imgLike.setImageResource(R.drawable.ic_baseline_thumb_up_done);
                 tvLikesCount.setText(String.valueOf(OldLikesCount));
                 imgLike.setEnabled(false);
                 imgDisLike.setEnabled(true);
-                if(tempdislike){
+                if(templike){
                     OldDisLikesCount=OldDisLikesCount-1;
                     tvDislikesCount.setText(String.valueOf(OldDisLikesCount));
                     imgDisLike.setImageResource(R.drawable.ic_baseline_thumb_down_alt_24);
                 }
-               updateLikesCount("Liked");
+               updateLikesCount( "இது உங்களுக்கு பிடித்திருக்கிறது");
             }
         });
 
         imgDisLike.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(isGuest.equals("yes")){
+                    snackbar("இந்த அம்சத்தைப் பயன்படுத்த உங்கள் மொபைல் எண்ணுடன் ஒரு கணக்கை உருவாக்கவும்");
+                    return;
+                }
                 tempdislike=true;
                 OldDisLikesCount=OldDisLikesCount+1;
                 imgDisLike.setImageResource(R.drawable.ic_baseline_thumb_down);
                 tvDislikesCount.setText(String.valueOf(OldDisLikesCount));
                 imgDisLike.setEnabled(false);
                 imgLike.setEnabled(true);
-                if(templike){
+                if(tempdislike){
                     OldLikesCount=OldLikesCount-1;
                     tvLikesCount.setText(String.valueOf(OldLikesCount));
                     imgLike.setImageResource(R.drawable.ic_baseline_thumb_up_alt_24);
                 }
-                updateLikesCount("Disliked");
+                updateLikesCount("இதை நீங்கள் விரும்பவில்லை");
             }
 
         });
@@ -112,21 +160,127 @@ public class ParticularFoodItem extends AppCompatActivity {
         imgFav.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(isGuest.equals("yes")){
+                    snackbar("இந்த அம்சத்தைப் பயன்படுத்த உங்கள் மொபைல் எண்ணுடன் ஒரு கணக்கை உருவாக்கவும்");
+                    return;
+                }
+                if(isFavoured){
+                    Task<Void> dr= db.collection("Users").document(UID)
+                            .collection("MyFavourites").document(foodID).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    snackbar("இந்த உணவு உங்களுக்கு பிடித்த பட்டியலிலிருந்து அகற்றப்பட்டது");
+                                    imgFav.setImageResource(R.drawable.imgfav);
+                                }
+                            }).addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
 
+                                }
+                            });
+                    return;
+                }
+                imgFav.setImageResource(R.drawable.imgfavred);
+                favourite.put("title",title);
+                favourite.put("category",category);
+                favourite.put("reciepe_image_url",foodPicURL);
+                favourite.put("foodID",foodID);
+                if (UID != null&foodID!=null) {
+                    db.collection("Users").document(UID).collection("MyFavourites").document(foodID)
+                            .set(favourite).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            //snackbar("இந்த உணவு உங்களுக்கு பிடித்த பட்டியலில் சேர்க்கப்பட்டுள்ளது");
+                            isFavoured = true;
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            toast("ஓ! பின்னர் முயற்சிக்கவும்");
+                        }
+                    });
+                }
             }
         });
 
         imgShare.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if(isGuest=="yes"){
+                    toast("Not Authorized");
+                    return;
+                }
             }
         });
+    }
+
+    private void getisLiked() {
+        db.collection("Recipes").document(foodID).addSnapshotListener(new EventListener<DocumentSnapshot>() {
+            @Override
+            public void onEvent(@Nullable DocumentSnapshot value, @Nullable FirebaseFirestoreException error) {
+                if(error!=null){
+                    return;
+                }
+                if(value.exists()){
+                    isLikedList = (List) value.getData().get("likedBy");
+                    Log.d("likeByList", isLikedList.toString());
+                    isDisLikedList= (List) value.getData().get("dislikedBy");
+                    Log.d("dislikeByList", isDisLikedList.toString());
+                    if(isLikedList.contains(UID)){
+                        isLiked=true;
+                        imgLike.setEnabled(false);
+                        imgLike.setImageResource(R.drawable.ic_baseline_thumb_up_done);
+                    }else if(isDisLikedList.contains(UID)){
+                        imgDisLike.setEnabled(false);
+                        imgDisLike.setImageResource(R.drawable.ic_baseline_thumb_down);
+                    }else{
+                        imgLike.setImageResource(R.drawable.ic_baseline_thumb_up_alt_24);
+                        imgDisLike.setImageResource(R.drawable.ic_baseline_thumb_down_alt_24);
+                    }
+                }
+            }
+        });
+    }
+
+    private void getIsFavoured() {
+       DocumentReference dr=db.collection("Users").document(UID).collection("MyFavourites").document(foodID);
+
+       dr.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+            @Override
+            public void onEvent(@Nullable DocumentSnapshot value, @Nullable FirebaseFirestoreException error) {
+                if(error!=null){
+                    return;
+                }
+                if(value.exists()&&value!=null){
+                    snackbar("உங்களுக்கு பிடித்த பட்டியலில் இந்த உணவைச் சேர்த்துள்ளீர்கள்");
+                    imgFav.setImageResource(R.drawable.imgfavred);
+                    isFavoured=true;
+                }else{
+                    imgFav.setImageResource(R.drawable.imgfav);
+                    isFavoured=false;
+                }
+            }
+        });
+    }
+
+    private void snackbar(String msg) {
+        Snackbar snackbar = Snackbar.make(particularParent, msg, Snackbar.LENGTH_LONG).setTextColor(Color.YELLOW).setDuration(5000);
+        View snackbarView = snackbar.getView();
+        TextView textView = (TextView) snackbarView.findViewById(R.id.snackbar_text);
+        textView.setMaxLines(3);  // show multiple line
+        snackbar.show();
     }
 
     private void updateLikesCount(String toastMsg) {
         updateLikes.put("likes",OldLikesCount);
         updateLikes.put("dislikes",OldDisLikesCount);
+        if(toastMsg.equals("Liked")) {
+            updateLikes.put("likedBy", FieldValue.arrayUnion(UID));
+            updateLikes.put("dislikedBy", FieldValue.arrayRemove(UID));
+        }else{
+            updateLikes.put("likedBy", FieldValue.arrayRemove(UID));
+            updateLikes.put("dislikedBy", FieldValue.arrayUnion(UID));
+        }
         db.collection("Recipes").document(foodID).update(updateLikes).addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -389,10 +543,35 @@ public class ParticularFoodItem extends AppCompatActivity {
         imgDisLike=findViewById(R.id.imgDisLike);
         imgFav=findViewById(R.id.imgFav);
         imgShare=findViewById(R.id.imgShare);
-
         tvLikesCount=findViewById(R.id.tvLikesCount);
         tvDislikesCount=findViewById(R.id.tvDislikesCount);
+        prefs = getSharedPreferences("locations", MODE_PRIVATE);
+        spEditor = getSharedPreferences("locations", MODE_PRIVATE).edit();
+        particularParent=findViewById(R.id.particularParent);
+        imgHome=findViewById(R.id.imgHome);
+        imgAllFoodList=findViewById(R.id.imgAllFoodList);
+        imgProfile=findViewById(R.id.imgProfile);
+
 
     }
+    @Override
+    public void onClick(View v) {
+        switch(v.getId()){
+            case R.id.imgHome :
+                startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                finish();
+            case R.id.imgAllFoodList :
+                startActivity(new Intent(getApplicationContext(), AllFoodsList.class));
+                finish();
+            case R.id.imgProfile :
+                startActivity(new Intent(getApplicationContext(), MyProfile.class));
+                finish();
+        }
+    }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
+    }
 }

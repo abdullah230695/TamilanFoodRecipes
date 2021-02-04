@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Tamilan Food Recipes</string>
+    <string name="title_activity_profile_full">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 </resources>

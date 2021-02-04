@@ -15,10 +15,11 @@ import com.shalla.tamilanfoodrecipes.Adapters.DBAdapter_TO_RecylerView;
 import com.shalla.tamilanfoodrecipes.MainActivity;
 import com.shalla.tamilanfoodrecipes.Models.DB_TO_RECYCLERVIEW;
 import com.shalla.tamilanfoodrecipes.ParticularFood.ParticularFoodItem;
+import com.shalla.tamilanfoodrecipes.Profile.MyProfile;
 import com.shalla.tamilanfoodrecipes.R;
 import com.shalla.tamilanfoodrecipes.RecyclerItemClick.RecyclerItemClickListener;
 
-public class AllFoodsList extends AppCompatActivity {
+public class AllFoodsList extends AppCompatActivity implements View.OnClickListener{
     RecyclerView RVbooking_history;
     DBAdapter_TO_RecylerView adapter;
     @Override
@@ -68,9 +69,19 @@ public class AllFoodsList extends AppCompatActivity {
 
     }
     @Override
+    public void onClick(View v) {
+        switch(v.getId()){
+            case R.id.imgHome :
+                startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                finish();
+            case R.id.imgProfile :
+                startActivity(new Intent(getApplicationContext(), MyProfile.class));
+                finish();
+        }
+    }
+    @Override
     public void onBackPressed() {
         super.onBackPressed();
-        startActivity(new Intent(getApplicationContext(), MainActivity.class));
         finish();
     }
 

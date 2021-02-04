@@ -40,9 +40,8 @@ public class VerifyPhoneSignUpActivity extends AppCompatActivity {
     ProgressBar progressBar;
     TextInputEditText editText;
     AppCompatButton buttonSignIn;
-
     String phoneNumber,name,password,UUID;
-    MainActivity ma=new MainActivity();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
