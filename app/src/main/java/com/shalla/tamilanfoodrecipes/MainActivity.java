@@ -2,6 +2,7 @@ package com.shalla.tamilanfoodrecipes;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -9,13 +10,11 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.shalla.tamilanfoodrecipes.FoodLists.AllFoodsList;
-import com.shalla.tamilanfoodrecipes.Profile.LoginActivity;
-import com.shalla.tamilanfoodrecipes.Profile.MyProfile;
+import com.shalla.tamilanfoodrecipes.Profile.myProfileView;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity {
 
     ImageView imgHome,imgAllFoodList,imgProfile;
-    LoginActivity la=new LoginActivity();
 
 
     @Override
@@ -24,9 +23,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         setupID();
 
-        //la.init();
-        imgAllFoodList.setOnClickListener(this);
-        imgProfile.setOnClickListener(this);
+        imgAllFoodList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(getApplication(), AllFoodsList.class);
+                startActivity(intent);
+                finish();
+            }
+        });
+
+        imgProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(getApplication(), myProfileView.class);
+                startActivity(intent);
+                finish();
+            }
+        });
     }
 
     private void setupID() {
@@ -36,18 +49,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
-    @Override
-    public void onClick(View v) {
-        switch(v.getId()){
-            case R.id.imgAllFoodList :
-                startActivity(new Intent(getApplicationContext(), AllFoodsList.class));
 
-            case R.id.imgProfile :
-                Intent intent=new Intent(getApplication(),MyProfile.class);
-                startActivity(intent);
-
-        }
-    }
     public void toast(String msg){
         Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
     }

@@ -2,23 +2,31 @@ package com.shalla.tamilanfoodrecipes.ParticularFood;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.cardview.widget.CardView;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.OnCanceledListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
@@ -27,13 +35,14 @@ import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
-import static com.shalla.tamilanfoodrecipes.Profile.MyProfile.*;
+
+import static com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_COLLAPSED;
 import static com.shalla.tamilanfoodrecipes.Profile.LoginActivity.*;
 
-import com.google.firebase.firestore.Query;
+import com.shalla.tamilanfoodrecipes.Adapters.FeedbacksListAdapter;
 import com.shalla.tamilanfoodrecipes.FoodLists.AllFoodsList;
 import com.shalla.tamilanfoodrecipes.MainActivity;
-import com.shalla.tamilanfoodrecipes.Profile.MyProfile;
+import com.shalla.tamilanfoodrecipes.Profile.myProfileView;
 import com.shalla.tamilanfoodrecipes.R;
 
 import java.util.ArrayList;
@@ -41,16 +50,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import de.hdodenhof.circleimageview.CircleImageView;
+
 public class ParticularFoodItem extends AppCompatActivity implements  View.OnClickListener {
+
+    //---------------------------------------------------------------------------------------------------
+
     @NonNull
     TextView tvCategory,tvTitle,tvDescription,tvDislikesCount,tvLikesCount;
     @NonNull
-    ImageView imgFoodPic,imgLike,imgDisLike,imgFav,imgShare,imgHome,imgAllFoodList,imgProfile;
+    ImageView imgFoodPic,imgLike,imgDisLike,imgFav,imgShare,imgHome,imgAllFoodList,imgProfile,imgCmntBtn;
     @NonNull
     TextView tvIng,tvIng1,tvIng2,tvIng3,tvIng4,tvIng5,tvIng6,tvIng7,tvIng8,tvIng9,tvIng10,
             tvIng11,tvIng12,tvIng13,tvIng14,tvIng15,tvIng16,tvIng17,tvIng18,tvIng19;
-    ConstraintLayout particularParent;
+    CoordinatorLayout particularParent;
+    CardView cvAddCmnt;
+    BottomNavigationView bottomBar;
+    EditText etComment;
+    List<String> feedbackList;
+    ListView lvFeebackList;
 
+    //---------------------------------------------------------------------------------------------------
     @NonNull
     FirebaseFirestore db=FirebaseFirestore.getInstance();
     FirebaseAuth mAuth=FirebaseAuth.getInstance();
@@ -69,13 +91,50 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
     Map<String,Object> favourite=new HashMap<>();
     List <String>isLikedList=new ArrayList();
     List <String>isDisLikedList=new ArrayList();
+
+    //---------------------------------------------------------------------------------------------------
+
+
+    //---------------------------------------------------------------------------------------------------
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_particular_food_item);
+        ButterKnife.bind(this);
         setupID();
+
+
+
         imgAllFoodList.setOnClickListener(this);
         imgProfile.setOnClickListener(this);
+
+        etComment.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+
+        etComment.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if(etComment.length()>0){
+                    imgCmntBtn.setVisibility(View.VISIBLE);
+                }else{
+                    imgCmntBtn.setVisibility(View.GONE);
+                }
+            }
+        });
 
 
         try {
@@ -104,6 +163,7 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
             }
 
                 getFoodInfo();
+
             if(!isGuest.equals("yes")) {
                 getIsFavoured();
                 getisLiked();
@@ -204,15 +264,30 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
         });
 
         imgShare.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onClick(View v) {
                 if(isGuest=="yes"){
                     toast("Not Authorized");
                     return;
                 }
+
+                String content="*தமிழன் உணவு*\n\n"+"*"+title+"*"+"\n\n"+"*தேவையான பொருட்கள்*\n\n"+ingredientsList.toString()
+                        +"\n\n"+"*செய்முறை விளக்கம்*\n\n"+description+"\n\n"+"--------------------------------------\n\n"
+                        +"*இதுபோன்ற சுவையான சமையல் குறிப்புகளைக் காண " +
+                        "கீழே உள்ள லிங்கை கிளிக் செய்து எங்களது அப்ளிகேஷனை டவுன்லோட் செய்யவும் !*\n\n"+"https://cutt.ly/5kjqNBj";
+
+                Intent sendIntent = new Intent();
+                sendIntent.setAction(Intent.ACTION_SEND);
+                sendIntent.putExtra(Intent.EXTRA_TEXT, content);
+                sendIntent.setType("text/plain");
+
+                Intent shareIntent = Intent.createChooser(sendIntent, "மற்றவர்களுடன் பகிருங்கள்");
+                startActivity(shareIntent);
             }
         });
     }
+
 
     private void getisLiked() {
         db.collection("Recipes").document(foodID).addSnapshotListener(new EventListener<DocumentSnapshot>() {
@@ -310,6 +385,9 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
                         OldDisLikesCount=  ((Long) value.get("dislikes")).intValue();
                             tvLikesCount.setText(String.valueOf(OldLikesCount));
                             tvDislikesCount.setText(String.valueOf(OldDisLikesCount));
+                        feedbackList=(List<String>) value.get("comments");
+                        Log.d("feedbackList", String.valueOf((feedbackList)));
+                        lvFeebackList.setAdapter(new FeedbacksListAdapter(ParticularFoodItem.this, feedbackList));
                     }
                 }
             });
@@ -551,8 +629,11 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
         imgHome=findViewById(R.id.imgHome);
         imgAllFoodList=findViewById(R.id.imgAllFoodList);
         imgProfile=findViewById(R.id.imgProfile);
-
-
+        cvAddCmnt=findViewById(R.id.cvAddCmnt);
+        bottomBar=findViewById(R.id.bottomNavigationView);
+        imgCmntBtn=findViewById(R.id.imgCmntBtn);
+        etComment=findViewById(R.id.etComment);
+        lvFeebackList=findViewById(R.id.lvShowCmnts);
     }
     @Override
     public void onClick(View v) {
@@ -564,7 +645,7 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
                 startActivity(new Intent(getApplicationContext(), AllFoodsList.class));
                 finish();
             case R.id.imgProfile :
-                startActivity(new Intent(getApplicationContext(), MyProfile.class));
+                startActivity(new Intent(getApplicationContext(), myProfileView.class));
                 finish();
         }
     }
