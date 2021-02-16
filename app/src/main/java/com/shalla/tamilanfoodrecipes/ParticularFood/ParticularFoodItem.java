@@ -7,7 +7,9 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -36,6 +38,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 
+import static android.R.layout.simple_list_item_1;
 import static com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_COLLAPSED;
 import static com.shalla.tamilanfoodrecipes.Profile.LoginActivity.*;
 
@@ -69,9 +72,9 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
     CardView cvAddCmnt;
     BottomNavigationView bottomBar;
     EditText etComment;
-    List<String> feedbackList;
+    //List feedbackList=new ArrayList<>();
     ListView lvFeebackList;
-
+    List<String> feedbackList ;
     //---------------------------------------------------------------------------------------------------
     @NonNull
     FirebaseFirestore db=FirebaseFirestore.getInstance();
@@ -108,13 +111,6 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
         imgAllFoodList.setOnClickListener(this);
         imgProfile.setOnClickListener(this);
 
-        etComment.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
-
         etComment.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -128,6 +124,10 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
 
             @Override
             public void afterTextChanged(Editable s) {
+                if(isGuest.equals("yes")){
+                    snackbar("இந்த அம்சத்தைப் பயன்படுத்த உங்கள் மொபைல் எண்ணுடன் ஒரு கணக்கை உருவாக்கவும்");
+                    return;
+                }
                 if(etComment.length()>0){
                     imgCmntBtn.setVisibility(View.VISIBLE);
                 }else{
@@ -171,6 +171,30 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        //To scroll listview inside a scrollview but not need when using custom listview
+     /*   lvFeebackList   .setOnTouchListener(new ListView.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                int action = event.getAction();
+                switch (action) {
+                    case MotionEvent.ACTION_DOWN:
+                        // Disallow ScrollView to intercept touch events.
+                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                        break;
+
+                    case MotionEvent.ACTION_UP:
+                        // Allow ScrollView to intercept touch events.
+                        v.getParent().requestDisallowInterceptTouchEvent(false);
+                        break;
+                }
+
+                // Handle ListView touch events.
+                v.onTouchEvent(event);
+                return true;
+            }
+        });*/
+
 
         imgLike.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -286,9 +310,36 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
                 startActivity(shareIntent);
             }
         });
+
+        imgCmntBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addComments();
+            }
+        });
+
     }
 
+    //End of OnCreate()
 
+
+    private void addComments() {
+     /*   Map<String, Object> comments=new HashMap<>();
+        comments.put("comments",FieldValue.arrayUnion(etComment.getText().toString()));*/
+        db.collection("Recipes").document(foodID).update("comments",FieldValue.arrayUnion(etComment.getText().toString()))
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        snackbar("உங்கள் கருத்துகள் சேர்க்கப்பட்டன");
+                        etComment.setText(null);
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+
+            }
+        });
+    }
     private void getisLiked() {
         db.collection("Recipes").document(foodID).addSnapshotListener(new EventListener<DocumentSnapshot>() {
             @Override
@@ -371,7 +422,9 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
 
     private void getFoodInfo() {
         try {
-            db.collection("Recipes").document(foodID).addSnapshotListener(new EventListener<DocumentSnapshot>() {
+            DocumentReference dr = db.collection("Recipes").document(foodID);
+
+            dr.addSnapshotListener(new EventListener<DocumentSnapshot>() {
                 @Override
                 public void onEvent(@Nullable DocumentSnapshot value, @Nullable FirebaseFirestoreException error) {
                     if(error!=null){
@@ -385,12 +438,14 @@ public class ParticularFoodItem extends AppCompatActivity implements  View.OnCli
                         OldDisLikesCount=  ((Long) value.get("dislikes")).intValue();
                             tvLikesCount.setText(String.valueOf(OldLikesCount));
                             tvDislikesCount.setText(String.valueOf(OldDisLikesCount));
-                        feedbackList=(List<String>) value.get("comments");
+                        feedbackList= (List<String>) value.get("comments");
                         Log.d("feedbackList", String.valueOf((feedbackList)));
                         lvFeebackList.setAdapter(new FeedbacksListAdapter(ParticularFoodItem.this, feedbackList));
                     }
+
                 }
             });
+
         } catch (Exception e) {
             e.printStackTrace();
         }

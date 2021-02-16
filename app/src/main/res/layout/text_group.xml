@@ -9,7 +9,5 @@
         android:layout_height="wrap_content"
         android:padding="5dp"
         android:text="TextView"
-        android:textColor="#0024A8"
-        android:textSize="18sp"
-        android:textStyle="bold|italic" />
+        android:textSize="14sp" />
 </LinearLayout>

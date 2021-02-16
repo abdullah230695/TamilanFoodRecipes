@@ -27,11 +27,11 @@ public class FeedbacksListAdapter extends BaseAdapter {
     @Override
     public int getCount() {
 
-        if ( feedbackList != null) {
-            return feedbackList.size();
-        }else {
-            return  0;
-        }
+    if ( feedbackList != null) {
+        return feedbackList.size();
+    }else{
+        return 0;
+    }
     }
 
     @Override
